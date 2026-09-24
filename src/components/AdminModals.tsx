@@ -11,9 +11,10 @@ import { ImageUploader } from './ImageUploader';
 interface GoalModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onSave?: (goal: DonationGoal) => Promise<void> | void;
 }
 
-export const GoalModal: React.FC<GoalModalProps> = ({ isOpen, onClose }) => {
+export const GoalModal: React.FC<GoalModalProps> = ({ isOpen, onClose, onSave }) => {
   const { donationGoal, updateDonationGoal } = useApp();
   const [formData, setFormData] = useState<DonationGoal>(donationGoal);
 
@@ -23,10 +24,14 @@ export const GoalModal: React.FC<GoalModalProps> = ({ isOpen, onClose }) => {
 
   if (!isOpen) return null;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    updateDonationGoal(formData);
-    onClose();
+    if (onSave) {
+      await onSave(formData);
+    } else {
+      updateDonationGoal(formData);
+      onClose();
+    }
   };
 
   return (
@@ -156,9 +161,10 @@ interface CatFormModalProps {
   isOpen: boolean;
   initialCat?: Cat | null;
   onClose: () => void;
+  onSave?: (cat: Cat | Omit<Cat, 'id'>) => Promise<void> | void;
 }
 
-export const CatFormModal: React.FC<CatFormModalProps> = ({ isOpen, initialCat, onClose }) => {
+export const CatFormModal: React.FC<CatFormModalProps> = ({ isOpen, initialCat, onClose, onSave }) => {
   const { addCat, updateCat } = useApp();
   const [name, setName] = useState('');
   const [photoUrl, setPhotoUrl] = useState('');
@@ -193,7 +199,7 @@ export const CatFormModal: React.FC<CatFormModalProps> = ({ isOpen, initialCat, 
 
   if (!isOpen) return null;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const tags = tagsStr
       .split(',')
@@ -204,31 +210,58 @@ export const CatFormModal: React.FC<CatFormModalProps> = ({ isOpen, initialCat, 
       ? photoUrl.trim()
       : 'https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?auto=format&fit=crop&w=800&q=80';
 
-    if (initialCat) {
-      updateCat({
-        ...initialCat,
-        name,
-        photo_url: safePhotoUrl,
-        rescue_story: rescueStory,
-        tags,
-        health_status: healthStatus,
-        age,
-        gender,
-        is_favorite: isFavorite,
-      });
+    if (onSave) {
+      if (initialCat) {
+        await onSave({
+          ...initialCat,
+          name,
+          photo_url: safePhotoUrl,
+          rescue_story: rescueStory,
+          tags,
+          health_status: healthStatus,
+          age,
+          gender,
+          is_favorite: isFavorite,
+        });
+      } else {
+        await onSave({
+          name,
+          photo_url: safePhotoUrl,
+          rescue_story: rescueStory,
+          tags,
+          health_status: healthStatus,
+          age,
+          gender,
+          is_favorite: isFavorite,
+        });
+      }
     } else {
-      addCat({
-        name,
-        photo_url: safePhotoUrl,
-        rescue_story: rescueStory,
-        tags,
-        health_status: healthStatus,
-        age,
-        gender,
-        is_favorite: isFavorite,
-      });
+      if (initialCat) {
+        updateCat({
+          ...initialCat,
+          name,
+          photo_url: safePhotoUrl,
+          rescue_story: rescueStory,
+          tags,
+          health_status: healthStatus,
+          age,
+          gender,
+          is_favorite: isFavorite,
+        });
+      } else {
+        addCat({
+          name,
+          photo_url: safePhotoUrl,
+          rescue_story: rescueStory,
+          tags,
+          health_status: healthStatus,
+          age,
+          gender,
+          is_favorite: isFavorite,
+        });
+      }
+      onClose();
     }
-    onClose();
   };
 
   return (
@@ -362,9 +395,10 @@ interface MenuFormModalProps {
   isOpen: boolean;
   initialItem?: MenuItem | null;
   onClose: () => void;
+  onSave?: (item: MenuItem | Omit<MenuItem, 'id'>) => Promise<void> | void;
 }
 
-export const MenuFormModal: React.FC<MenuFormModalProps> = ({ isOpen, initialItem, onClose }) => {
+export const MenuFormModal: React.FC<MenuFormModalProps> = ({ isOpen, initialItem, onClose, onSave }) => {
   const { addMenuItem, updateMenuItem } = useApp();
   const [name, setName] = useState('');
   const [category, setCategory] = useState<'Coffee & Drinks' | 'Main Meals' | 'Pastries'>('Coffee & Drinks');
@@ -399,7 +433,7 @@ export const MenuFormModal: React.FC<MenuFormModalProps> = ({ isOpen, initialIte
 
   if (!isOpen) return null;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const tags = tagsStr
       .split(',')
@@ -410,31 +444,58 @@ export const MenuFormModal: React.FC<MenuFormModalProps> = ({ isOpen, initialIte
       ? imageUrl.trim()
       : 'https://images.unsplash.com/photo-1517701550927-30cf4ba1dba5?auto=format&fit=crop&w=600&q=80';
 
-    if (initialItem) {
-      updateMenuItem({
-        ...initialItem,
-        name,
-        category,
-        price_rm: Number(priceRm),
-        description,
-        image_url: safeImageUrl,
-        is_available: isAvailable,
-        tags,
-        preparation_note: preparationNote,
-      });
+    if (onSave) {
+      if (initialItem) {
+        await onSave({
+          ...initialItem,
+          name,
+          category,
+          price_rm: Number(priceRm),
+          description,
+          image_url: safeImageUrl,
+          is_available: isAvailable,
+          tags,
+          preparation_note: preparationNote,
+        });
+      } else {
+        await onSave({
+          name,
+          category,
+          price_rm: Number(priceRm),
+          description,
+          image_url: safeImageUrl,
+          is_available: isAvailable,
+          tags,
+          preparation_note: preparationNote,
+        });
+      }
     } else {
-      addMenuItem({
-        name,
-        category,
-        price_rm: Number(priceRm),
-        description,
-        image_url: safeImageUrl,
-        is_available: isAvailable,
-        tags,
-        preparation_note: preparationNote,
-      });
+      if (initialItem) {
+        updateMenuItem({
+          ...initialItem,
+          name,
+          category,
+          price_rm: Number(priceRm),
+          description,
+          image_url: safeImageUrl,
+          is_available: isAvailable,
+          tags,
+          preparation_note: preparationNote,
+        });
+      } else {
+        addMenuItem({
+          name,
+          category,
+          price_rm: Number(priceRm),
+          description,
+          image_url: safeImageUrl,
+          is_available: isAvailable,
+          tags,
+          preparation_note: preparationNote,
+        });
+      }
+      onClose();
     }
-    onClose();
   };
 
   return (
@@ -570,9 +631,10 @@ interface TNRFormModalProps {
   isOpen: boolean;
   initialUpdate?: TNRUpdate | null;
   onClose: () => void;
+  onSave?: (update: TNRUpdate | Omit<TNRUpdate, 'id'>) => Promise<void> | void;
 }
 
-export const TNRFormModal: React.FC<TNRFormModalProps> = ({ isOpen, initialUpdate, onClose }) => {
+export const TNRFormModal: React.FC<TNRFormModalProps> = ({ isOpen, initialUpdate, onClose, onSave }) => {
   const { addTNRUpdate, updateTNRUpdate } = useApp();
   const [title, setTitle] = useState('');
   const [date, setDate] = useState('');
@@ -607,37 +669,64 @@ export const TNRFormModal: React.FC<TNRFormModalProps> = ({ isOpen, initialUpdat
 
   if (!isOpen) return null;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const safePhotoUrl = photoUrl && photoUrl.trim() !== ''
       ? photoUrl.trim()
       : 'https://images.unsplash.com/photo-1548767797-d8c844163c4c?auto=format&fit=crop&w=800&q=80';
 
-    if (initialUpdate) {
-      updateTNRUpdate({
-        ...initialUpdate,
-        title,
-        date,
-        cats_treated_count: Number(catsTreatedCount),
-        description,
-        photo_url: safePhotoUrl,
-        cost_rm: costRm ? Number(costRm) : undefined,
-        location,
-        receipt_summary: receiptSummary,
-      });
+    if (onSave) {
+      if (initialUpdate) {
+        await onSave({
+          ...initialUpdate,
+          title,
+          date,
+          cats_treated_count: Number(catsTreatedCount),
+          description,
+          photo_url: safePhotoUrl,
+          cost_rm: costRm ? Number(costRm) : undefined,
+          location,
+          receipt_summary: receiptSummary,
+        });
+      } else {
+        await onSave({
+          title,
+          date,
+          cats_treated_count: Number(catsTreatedCount),
+          description,
+          photo_url: safePhotoUrl,
+          cost_rm: costRm ? Number(costRm) : undefined,
+          location,
+          receipt_summary: receiptSummary,
+        });
+      }
     } else {
-      addTNRUpdate({
-        title,
-        date,
-        cats_treated_count: Number(catsTreatedCount),
-        description,
-        photo_url: safePhotoUrl,
-        cost_rm: costRm ? Number(costRm) : undefined,
-        location,
-        receipt_summary: receiptSummary,
-      });
+      if (initialUpdate) {
+        updateTNRUpdate({
+          ...initialUpdate,
+          title,
+          date,
+          cats_treated_count: Number(catsTreatedCount),
+          description,
+          photo_url: safePhotoUrl,
+          cost_rm: costRm ? Number(costRm) : undefined,
+          location,
+          receipt_summary: receiptSummary,
+        });
+      } else {
+        addTNRUpdate({
+          title,
+          date,
+          cats_treated_count: Number(catsTreatedCount),
+          description,
+          photo_url: safePhotoUrl,
+          cost_rm: costRm ? Number(costRm) : undefined,
+          location,
+          receipt_summary: receiptSummary,
+        });
+      }
+      onClose();
     }
-    onClose();
   };
 
   return (
@@ -766,9 +855,10 @@ interface WishlistFormModalProps {
   isOpen: boolean;
   initialItem?: WishlistItem | null;
   onClose: () => void;
+  onSave?: (item: WishlistItem | Omit<WishlistItem, 'id'>) => Promise<void> | void;
 }
 
-export const WishlistFormModal: React.FC<WishlistFormModalProps> = ({ isOpen, initialItem, onClose }) => {
+export const WishlistFormModal: React.FC<WishlistFormModalProps> = ({ isOpen, initialItem, onClose, onSave }) => {
   const { addWishlistItem, updateWishlistItem } = useApp();
   const [itemName, setItemName] = useState('');
   const [urgency, setUrgency] = useState<'High' | 'Medium'>('High');
@@ -797,29 +887,52 @@ export const WishlistFormModal: React.FC<WishlistFormModalProps> = ({ isOpen, in
 
   if (!isOpen) return null;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (initialItem) {
-      updateWishlistItem({
-        ...initialItem,
-        item_name: itemName,
-        urgency,
-        quantity_needed: quantityNeeded,
-        fulfilled_count: fulfilledCount,
-        category,
-        brand_preference: brandPreference,
-      });
+    if (onSave) {
+      if (initialItem) {
+        await onSave({
+          ...initialItem,
+          item_name: itemName,
+          urgency,
+          quantity_needed: quantityNeeded,
+          fulfilled_count: fulfilledCount,
+          category,
+          brand_preference: brandPreference,
+        });
+      } else {
+        await onSave({
+          item_name: itemName,
+          urgency,
+          quantity_needed: quantityNeeded,
+          fulfilled_count: fulfilledCount,
+          category,
+          brand_preference: brandPreference,
+        });
+      }
     } else {
-      addWishlistItem({
-        item_name: itemName,
-        urgency,
-        quantity_needed: quantityNeeded,
-        fulfilled_count: fulfilledCount,
-        category,
-        brand_preference: brandPreference,
-      });
+      if (initialItem) {
+        updateWishlistItem({
+          ...initialItem,
+          item_name: itemName,
+          urgency,
+          quantity_needed: quantityNeeded,
+          fulfilled_count: fulfilledCount,
+          category,
+          brand_preference: brandPreference,
+        });
+      } else {
+        addWishlistItem({
+          item_name: itemName,
+          urgency,
+          quantity_needed: quantityNeeded,
+          fulfilled_count: fulfilledCount,
+          category,
+          brand_preference: brandPreference,
+        });
+      }
+      onClose();
     }
-    onClose();
   };
 
   return (

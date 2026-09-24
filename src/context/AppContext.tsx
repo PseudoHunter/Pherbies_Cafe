@@ -19,6 +19,7 @@ import {
   getActiveSupabaseClient,
   resetAllToDefault,
 } from '../services/supabaseClient';
+import { loadAllData as fetchAllData } from '../services/dataService';
 
 interface ToastState {
   id: number;
@@ -78,6 +79,14 @@ interface AppContextType {
   updateSupabaseCredentials: (url: string, key: string) => Promise<boolean>;
   syncWithSupabase: () => Promise<void>;
   resetToDefaults: () => void;
+  setAllData: (data: {
+    goal: DonationGoal;
+    cats: Cat[];
+    menu: MenuItem[];
+    tnr: TNRUpdate[];
+    wishlist: WishlistItem[];
+  }) => void;
+  loadAllData: () => Promise<void>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -133,66 +142,41 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     showToast('Logged out of Admin mode.', 'info');
   };
 
-  // Sync from Supabase on mount or credential change
-  const syncWithSupabase = useCallback(async () => {
-    const client = getActiveSupabaseClient();
-    if (!client) return;
+  const setAllData = useCallback(
+    (data: {
+      goal: DonationGoal;
+      cats: Cat[];
+      menu: MenuItem[];
+      tnr: TNRUpdate[];
+      wishlist: WishlistItem[];
+    }) => {
+      setDonationGoal(data.goal);
+      setCats(data.cats);
+      setMenuItems(data.menu);
+      setTnrUpdates(data.tnr);
+      setWishlist(data.wishlist);
+    },
+    []
+  );
 
+  const refreshAllData = useCallback(async () => {
     try {
-      // 1. Goal
-      const { data: goalData, error: goalErr } = await client.from('donation_goal').select('*').limit(1).maybeSingle();
-      if (!goalErr && goalData) {
-        const mappedGoal: DonationGoal = {
-          raised_amount: Number(goalData.raised_amount),
-          target_amount: Number(goalData.target_amount),
-          month_label: goalData.month_label || 'October 2026',
-          total_donors: goalData.total_donors || 46,
-          vet_bills_target: Number(goalData.vet_bills_target) || 1500,
-          food_target: Number(goalData.food_target) || 1000,
-          litter_target: Number(goalData.litter_target) || 600,
-          vitamins_target: Number(goalData.vitamins_target) || 400,
-        };
-        setDonationGoal(mappedGoal);
-        saveLocalGoal(mappedGoal);
-      }
-
-      // 2. Cats
-      const { data: catsData, error: catsErr } = await client.from('cats').select('*').order('created_at', { ascending: false });
-      if (!catsErr && catsData && catsData.length > 0) {
-        setCats(catsData as Cat[]);
-        saveLocalCats(catsData as Cat[]);
-      }
-
-      // 3. Menu
-      const { data: menuData, error: menuErr } = await client.from('menu_items').select('*').order('created_at', { ascending: true });
-      if (!menuErr && menuData && menuData.length > 0) {
-        setMenuItems(menuData as MenuItem[]);
-        saveLocalMenu(menuData as MenuItem[]);
-      }
-
-      // 4. TNR
-      const { data: tnrData, error: tnrErr } = await client.from('tnr_updates').select('*').order('date', { ascending: false });
-      if (!tnrErr && tnrData && tnrData.length > 0) {
-        setTnrUpdates(tnrData as TNRUpdate[]);
-        saveLocalTNR(tnrData as TNRUpdate[]);
-      }
-
-      // 5. Wishlist
-      const { data: wishData, error: wishErr } = await client.from('wishlist_items').select('*');
-      if (!wishErr && wishData && wishData.length > 0) {
-        setWishlist(wishData as WishlistItem[]);
-        saveLocalWishlist(wishData as WishlistItem[]);
-      }
-
+      const data = await fetchAllData();
+      setAllData(data);
       setSupabaseConfig((prev) => ({
         ...prev,
-        isConnected: true,
+        isConnected: !!getActiveSupabaseClient(),
         lastSynced: new Date().toLocaleTimeString(),
       }));
     } catch (err) {
-      console.warn('Supabase sync skipped/failed:', err);
+      console.warn('refreshAllData failed:', err);
     }
-  }, []);
+  }, [setAllData]);
+
+  // Sync from Supabase on mount or credential change
+  const syncWithSupabase = useCallback(async () => {
+    await refreshAllData();
+  }, [refreshAllData]);
 
   // Update Supabase credentials from settings modal
   const updateSupabaseCredentials = async (url: string, key: string): Promise<boolean> => {
@@ -576,6 +560,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         updateSupabaseCredentials,
         syncWithSupabase,
         resetToDefaults,
+        setAllData,
+        loadAllData: refreshAllData,
       }}
     >
       {children}

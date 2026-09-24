@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { AppProvider, useApp } from './context/AppContext';
 import { AdminBar } from './components/AdminBar';
 import { Navbar } from './components/Navbar';
@@ -53,10 +53,24 @@ import {
   WishlistFormModal,
   SupabaseModal,
 } from './components/AdminModals';
-import { Cat, MenuItem, TNRUpdate, WishlistItem } from './types';
+import { Cat, MenuItem, TNRUpdate, WishlistItem, DonationGoal } from './types';
+import {
+  loadAllData,
+  saveDonationGoal,
+  saveCat,
+  deleteCat as removeCat,
+  saveMenuItem,
+  deleteMenuItem as removeMenuItem,
+  toggleMenuAvailability as toggleItemAvailability,
+  saveTNRUpdate,
+  deleteTNRUpdate as removeTNRUpdate,
+  saveWishlistItem,
+  deleteWishlistItem as removeWishlistItem,
+  subscribeToRealtime,
+} from './services/dataService';
 
 const MainAppContent: React.FC = () => {
-  const { setIsLoginModalOpen } = useApp();
+  const { setIsLoginModalOpen, setAllData, showToast } = useApp();
 
   // Modal states for Admin actions
   const [isGoalModalOpen, setIsGoalModalOpen] = useState(false);
@@ -77,8 +91,32 @@ const MainAppContent: React.FC = () => {
   const [isWishlistModalOpen, setIsWishlistModalOpen] = useState(false);
   const [editingWishlist, setEditingWishlist] = useState<WishlistItem | null>(null);
 
-  // Stealth Access Mechanism 1: Keyboard combo Ctrl+Shift+A / Cmd+Shift+A
-  // Stealth Access Mechanism 3: URL Hash trigger (#pherbies-admin or #admin)
+  // 1. Data Fetching & State Refresh Function
+  const refreshAllAppData = useCallback(async () => {
+    try {
+      const data = await loadAllData();
+      setAllData(data);
+    } catch (err) {
+      console.warn('Error loading latest data from Supabase:', err);
+    }
+  }, [setAllData]);
+
+  // 2. Load all latest data on mount & subscribe to Realtime updates
+  useEffect(() => {
+    // Initial fetch on mount
+    refreshAllAppData();
+
+    // Supabase Realtime channel subscription across public tables
+    const unsubscribe = subscribeToRealtime(() => {
+      refreshAllAppData();
+    });
+
+    return () => {
+      unsubscribe();
+    };
+  }, [refreshAllAppData]);
+
+  // 3. Stealth Access: Ctrl+Shift+A / Cmd+Shift+A & URL Hash (#pherbies-admin)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'a' || e.key === 'A')) {
@@ -107,6 +145,80 @@ const MainAppContent: React.FC = () => {
       window.removeEventListener('hashchange', handleHash);
     };
   }, [setIsLoginModalOpen]);
+
+  // 4. Admin Save & Delete Handlers
+  const handleSaveGoal = async (newGoal: DonationGoal) => {
+    await saveDonationGoal(newGoal);
+    await refreshAllAppData();
+    showToast('Monthly rescue goal updated and synced! 🎯', 'success');
+    setIsGoalModalOpen(false);
+  };
+
+  const handleSaveCat = async (catData: Cat | Omit<Cat, 'id'>) => {
+    await saveCat(catData);
+    await refreshAllAppData();
+    showToast(
+      'id' in catData && catData.id
+        ? `Updated ${catData.name}'s profile!`
+        : `Added ${catData.name} to resident rescues! 🐾`,
+      'success'
+    );
+    setIsCatModalOpen(false);
+    setEditingCat(null);
+  };
+
+  const handleDeleteCat = async (id: string) => {
+    await removeCat(id);
+    await refreshAllAppData();
+    showToast('Cat profile removed.', 'info');
+  };
+
+  const handleSaveMenuItem = async (itemData: MenuItem | Omit<MenuItem, 'id'>) => {
+    await saveMenuItem(itemData);
+    await refreshAllAppData();
+    showToast(`Menu item "${itemData.name}" saved! ☕`, 'success');
+    setIsMenuModalOpen(false);
+    setEditingMenuItem(null);
+  };
+
+  const handleDeleteMenuItem = async (id: string) => {
+    await removeMenuItem(id);
+    await refreshAllAppData();
+    showToast('Menu item removed.', 'info');
+  };
+
+  const handleToggleMenuAvailability = async (id: string) => {
+    await toggleItemAvailability(id);
+    await refreshAllAppData();
+  };
+
+  const handleSaveTNRUpdate = async (tnrData: TNRUpdate | Omit<TNRUpdate, 'id'>) => {
+    await saveTNRUpdate(tnrData);
+    await refreshAllAppData();
+    showToast(`TNR Mission "${tnrData.title}" saved! ✂️`, 'success');
+    setIsTnrModalOpen(false);
+    setEditingTnr(null);
+  };
+
+  const handleDeleteTNRUpdate = async (id: string) => {
+    await removeTNRUpdate(id);
+    await refreshAllAppData();
+    showToast('TNR record removed.', 'info');
+  };
+
+  const handleSaveWishlistItem = async (itemData: WishlistItem | Omit<WishlistItem, 'id'>) => {
+    await saveWishlistItem(itemData);
+    await refreshAllAppData();
+    showToast(`Wishlist item "${itemData.item_name}" saved! 📦`, 'success');
+    setIsWishlistModalOpen(false);
+    setEditingWishlist(null);
+  };
+
+  const handleDeleteWishlistItem = async (id: string) => {
+    await removeWishlistItem(id);
+    await refreshAllAppData();
+    showToast('Wishlist item removed.', 'info');
+  };
 
   return (
     <div className="min-h-screen flex flex-col bg-[#FFFBF5] text-[#3D2619]">
@@ -182,6 +294,7 @@ const MainAppContent: React.FC = () => {
       <GoalModal
         isOpen={isGoalModalOpen}
         onClose={() => setIsGoalModalOpen(false)}
+        onSave={handleSaveGoal}
       />
 
       <CatFormModal
@@ -191,6 +304,7 @@ const MainAppContent: React.FC = () => {
           setIsCatModalOpen(false);
           setEditingCat(null);
         }}
+        onSave={handleSaveCat}
       />
 
       <MenuFormModal
@@ -200,6 +314,7 @@ const MainAppContent: React.FC = () => {
           setIsMenuModalOpen(false);
           setEditingMenuItem(null);
         }}
+        onSave={handleSaveMenuItem}
       />
 
       <TNRFormModal
@@ -209,6 +324,7 @@ const MainAppContent: React.FC = () => {
           setIsTnrModalOpen(false);
           setEditingTnr(null);
         }}
+        onSave={handleSaveTNRUpdate}
       />
 
       <WishlistFormModal
@@ -218,6 +334,7 @@ const MainAppContent: React.FC = () => {
           setIsWishlistModalOpen(false);
           setEditingWishlist(null);
         }}
+        onSave={handleSaveWishlistItem}
       />
     </div>
   );
