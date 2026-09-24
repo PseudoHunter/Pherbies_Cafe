@@ -84,6 +84,8 @@ export async function saveDonationGoal(goal: DonationGoal): Promise<void> {
   }
 }
 
+export const updateDonationGoal = saveDonationGoal;
+
 // ==========================================
 // 2. Rescued Cats CRUD
 // ==========================================

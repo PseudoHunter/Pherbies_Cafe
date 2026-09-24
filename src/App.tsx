@@ -11,40 +11,6 @@ import { Footer } from './components/Footer';
 import { CartDrawer } from './components/CartDrawer';
 import { Toast } from './components/Toast';
 import { AdminLoginModal } from './components/AdminLoginModal';
-import { 
-  fetchDonationGoal, updateDonationGoal, 
-  fetchCats, saveCat, deleteCat,
-  fetchMenu, saveMenuItem, deleteMenuItem,
-  fetchTNRUpdates, saveTNRUpdate,
-  fetchWishlist, saveWishlistItem 
-} from './services/dataService';
-
-  useEffect(() => {
-    loadAllData();
-  }, []);
-
-  // Handler example when Admin edits Goal
-  const handleGoalUpdate = async (newAmount: number) => {
-    if (!goal) return;
-    const updated = { ...goal, raised_amount: newAmount };
-    setGoal(updated); // Update UI instantly
-    await updateDonationGoal(updated); // Save to Supabase
-  };
-
-  // Handler example when Admin adds or edits a Cat
-  const handleSaveCat = async (catData: Cat) => {
-    await saveCat(catData);
-    await loadAllData(); // Refresh UI
-  };
-
-  // Handler example when Admin edits a Menu item
-  const handleSaveMenuItem = async (itemData: MenuItem) => {
-    await saveMenuItem(itemData);
-    await loadAllData();
-  };
-
-  // ... Rest of your UI rendering components
-}
 import {
   GoalModal,
   CatFormModal,
@@ -56,16 +22,22 @@ import {
 import { Cat, MenuItem, TNRUpdate, WishlistItem, DonationGoal } from './types';
 import {
   loadAllData,
+  fetchDonationGoal,
+  updateDonationGoal,
   saveDonationGoal,
+  fetchCats,
   saveCat,
-  deleteCat as removeCat,
+  deleteCat,
+  fetchMenu,
   saveMenuItem,
-  deleteMenuItem as removeMenuItem,
-  toggleMenuAvailability as toggleItemAvailability,
+  deleteMenuItem,
+  toggleMenuAvailability,
+  fetchTNRUpdates,
   saveTNRUpdate,
-  deleteTNRUpdate as removeTNRUpdate,
+  deleteTNRUpdate,
+  fetchWishlist,
   saveWishlistItem,
-  deleteWishlistItem as removeWishlistItem,
+  deleteWishlistItem,
   subscribeToRealtime,
 } from './services/dataService';
 
@@ -148,7 +120,7 @@ const MainAppContent: React.FC = () => {
 
   // 4. Admin Save & Delete Handlers
   const handleSaveGoal = async (newGoal: DonationGoal) => {
-    await saveDonationGoal(newGoal);
+    await updateDonationGoal(newGoal);
     await refreshAllAppData();
     showToast('Monthly rescue goal updated and synced! 🎯', 'success');
     setIsGoalModalOpen(false);
@@ -168,7 +140,7 @@ const MainAppContent: React.FC = () => {
   };
 
   const handleDeleteCat = async (id: string) => {
-    await removeCat(id);
+    await deleteCat(id);
     await refreshAllAppData();
     showToast('Cat profile removed.', 'info');
   };
@@ -182,13 +154,13 @@ const MainAppContent: React.FC = () => {
   };
 
   const handleDeleteMenuItem = async (id: string) => {
-    await removeMenuItem(id);
+    await deleteMenuItem(id);
     await refreshAllAppData();
     showToast('Menu item removed.', 'info');
   };
 
   const handleToggleMenuAvailability = async (id: string) => {
-    await toggleItemAvailability(id);
+    await toggleMenuAvailability(id);
     await refreshAllAppData();
   };
 
@@ -201,7 +173,7 @@ const MainAppContent: React.FC = () => {
   };
 
   const handleDeleteTNRUpdate = async (id: string) => {
-    await removeTNRUpdate(id);
+    await deleteTNRUpdate(id);
     await refreshAllAppData();
     showToast('TNR record removed.', 'info');
   };
@@ -215,7 +187,7 @@ const MainAppContent: React.FC = () => {
   };
 
   const handleDeleteWishlistItem = async (id: string) => {
-    await removeWishlistItem(id);
+    await deleteWishlistItem(id);
     await refreshAllAppData();
     showToast('Wishlist item removed.', 'info');
   };
@@ -346,30 +318,4 @@ export default function App() {
       <MainAppContent />
     </AppProvider>
   );
-  export default function App() {
-  // ... your existing state variables (e.g. const [cats, setCats] = useState(...)) ...
-
-  // Function to fetch fresh data from Supabase
-  const loadAllData = async () => {
-    const [fetchedGoal, fetchedCats, fetchedMenu, fetchedTnr, fetchedWishlist] = await Promise.all([
-      fetchDonationGoal(),
-      fetchCats(),
-      fetchMenu(),
-      fetchTNRUpdates(),
-      fetchWishlist()
-    ]);
-
-    if (fetchedGoal && setGoal) setGoal(fetchedGoal);
-    if (fetchedCats && setCats) setCats(fetchedCats);
-    if (fetchedMenu && setMenu) setMenu(fetchedMenu);
-    if (fetchedTnr && setTnr) setTnr(fetchedTnr);
-    if (fetchedWishlist && setWishlist) setWishlist(fetchedWishlist);
-  };
-
-  useEffect(() => {
-    loadAllData();
-  }, []);
-
-  // ... rest of your existing component logic & JSX layout ...
-}
 }
