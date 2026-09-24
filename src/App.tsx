@@ -67,8 +67,9 @@ export function App() {
     await saveMenuItem(itemData);
     await loadAllData();
   };
-}
 
+  // ... Rest of your UI rendering components
+}
 import {
   GoalModal,
   CatFormModal,
