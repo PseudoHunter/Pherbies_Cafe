@@ -1,0 +1,6 @@
+{
+  "name": "Pherbies Cafe & Cat Rescue",
+  "description": "A warm home cafe and cat rescue initiative where coffee and treats fund monthly care, vet bills, food, and neighborhood TNR operations for stray cats in Malaysia.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

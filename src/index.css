@@ -1,0 +1,51 @@
+@import "tailwindcss";
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    scroll-padding-top: 5.5rem;
+  }
+
+  body {
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  }
+  
+  .font-serif-cozy {
+    font-family: 'Fraunces', Georgia, Cambria, serif;
+  }
+}
+
+/* Custom styling for custom scrollbars and smooth interactions */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #FDF6EC;
+}
+::-webkit-scrollbar-thumb {
+  background: #D97746;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #C85A32;
+}
+
+@keyframes pulseGently {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.85; transform: scale(1.02); }
+}
+
+.animate-pulse-gently {
+  animation: pulseGently 3s ease-in-out infinite;
+}
+
+@keyframes sectionHighlight {
+  0% { background-color: rgba(224, 122, 95, 0.12); }
+  100% { background-color: transparent; }
+}
+
+.section-highlight {
+  animation: sectionHighlight 1.6s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+
