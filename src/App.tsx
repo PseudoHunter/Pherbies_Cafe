@@ -11,7 +11,6 @@ import { Footer } from './components/Footer';
 import { CartDrawer } from './components/CartDrawer';
 import { Toast } from './components/Toast';
 import { AdminLoginModal } from './components/AdminLoginModal';
-import { useEffect, useState } from 'react';
 import { 
   fetchDonationGoal, updateDonationGoal, 
   fetchCats, saveCat, deleteCat,
@@ -19,30 +18,6 @@ import {
   fetchTNRUpdates, saveTNRUpdate,
   fetchWishlist, saveWishlistItem 
 } from './services/dataService';
-
-export function App() {
-  const [goal, setGoal] = useState<DonationGoal | null>(null);
-  const [cats, setCats] = useState<Cat[]>([]);
-  const [menu, setMenu] = useState<MenuItem[]>([]);
-  const [tnr, setTnr] = useState<TNRUpdate[]>([]);
-  const [wishlist, setWishlist] = useState<WishlistItem[]>([]);
-
-  // Load all items live on page load
-  async function loadAllData() {
-    const [fetchedGoal, fetchedCats, fetchedMenu, fetchedTnr, fetchedWishlist] = await Promise.all([
-      fetchDonationGoal(),
-      fetchCats(),
-      fetchMenu(),
-      fetchTNRUpdates(),
-      fetchWishlist()
-    ]);
-
-    setGoal(fetchedGoal);
-    setCats(fetchedCats);
-    setMenu(fetchedMenu);
-    setTnr(fetchedTnr);
-    setWishlist(fetchedWishlist);
-  }
 
   useEffect(() => {
     loadAllData();
@@ -254,4 +229,30 @@ export default function App() {
       <MainAppContent />
     </AppProvider>
   );
+  export default function App() {
+  // ... your existing state variables (e.g. const [cats, setCats] = useState(...)) ...
+
+  // Function to fetch fresh data from Supabase
+  const loadAllData = async () => {
+    const [fetchedGoal, fetchedCats, fetchedMenu, fetchedTnr, fetchedWishlist] = await Promise.all([
+      fetchDonationGoal(),
+      fetchCats(),
+      fetchMenu(),
+      fetchTNRUpdates(),
+      fetchWishlist()
+    ]);
+
+    if (fetchedGoal && setGoal) setGoal(fetchedGoal);
+    if (fetchedCats && setCats) setCats(fetchedCats);
+    if (fetchedMenu && setMenu) setMenu(fetchedMenu);
+    if (fetchedTnr && setTnr) setTnr(fetchedTnr);
+    if (fetchedWishlist && setWishlist) setWishlist(fetchedWishlist);
+  };
+
+  useEffect(() => {
+    loadAllData();
+  }, []);
+
+  // ... rest of your existing component logic & JSX layout ...
+}
 }
