@@ -68,6 +68,7 @@ export function App() {
     await loadAllData();
   };
 }
+
 import {
   GoalModal,
   CatFormModal,
