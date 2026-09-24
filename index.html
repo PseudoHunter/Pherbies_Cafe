@@ -15,6 +15,14 @@
   </head>
   <body class="bg-[#FFFBF5] text-[#3D2619] antialiased selection:bg-[#E07A5F] selection:text-white">
     <div id="root"></div>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  // Read Vercel environment variables or fallback to direct strings
+  const SUPABASE_URL = import.meta.env?.VITE_SUPABASE_URL || 'https://mtkpxbnpkjwctukfzqgk.supabase.co';
+  const SUPABASE_ANON_KEY = import.meta.env?.VITE_SUPABASE_ANON_KEY || 'YOUR_ACTUAL_ANON_KEY_HERE';
+
+  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+</script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
