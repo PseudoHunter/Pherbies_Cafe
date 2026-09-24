@@ -11,6 +11,7 @@ import { Footer } from './components/Footer';
 import { CartDrawer } from './components/CartDrawer';
 import { Toast } from './components/Toast';
 import { AdminLoginModal } from './components/AdminLoginModal';
+import { useEffect, useState } from 'react';
 import { 
   fetchDonationGoal, updateDonationGoal, 
   fetchCats, saveCat, deleteCat,
@@ -18,6 +19,55 @@ import {
   fetchTNRUpdates, saveTNRUpdate,
   fetchWishlist, saveWishlistItem 
 } from './services/dataService';
+
+export function App() {
+  const [goal, setGoal] = useState<DonationGoal | null>(null);
+  const [cats, setCats] = useState<Cat[]>([]);
+  const [menu, setMenu] = useState<MenuItem[]>([]);
+  const [tnr, setTnr] = useState<TNRUpdate[]>([]);
+  const [wishlist, setWishlist] = useState<WishlistItem[]>([]);
+
+  // Load all items live on page load
+  async function loadAllData() {
+    const [fetchedGoal, fetchedCats, fetchedMenu, fetchedTnr, fetchedWishlist] = await Promise.all([
+      fetchDonationGoal(),
+      fetchCats(),
+      fetchMenu(),
+      fetchTNRUpdates(),
+      fetchWishlist()
+    ]);
+
+    setGoal(fetchedGoal);
+    setCats(fetchedCats);
+    setMenu(fetchedMenu);
+    setTnr(fetchedTnr);
+    setWishlist(fetchedWishlist);
+  }
+
+  useEffect(() => {
+    loadAllData();
+  }, []);
+
+  // Handler example when Admin edits Goal
+  const handleGoalUpdate = async (newAmount: number) => {
+    if (!goal) return;
+    const updated = { ...goal, raised_amount: newAmount };
+    setGoal(updated); // Update UI instantly
+    await updateDonationGoal(updated); // Save to Supabase
+  };
+
+  // Handler example when Admin adds or edits a Cat
+  const handleSaveCat = async (catData: Cat) => {
+    await saveCat(catData);
+    await loadAllData(); // Refresh UI
+  };
+
+  // Handler example when Admin edits a Menu item
+  const handleSaveMenuItem = async (itemData: MenuItem) => {
+    await saveMenuItem(itemData);
+    await loadAllData();
+  };
+}
 import {
   GoalModal,
   CatFormModal,
