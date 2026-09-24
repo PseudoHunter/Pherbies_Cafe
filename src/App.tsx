@@ -11,6 +11,13 @@ import { Footer } from './components/Footer';
 import { CartDrawer } from './components/CartDrawer';
 import { Toast } from './components/Toast';
 import { AdminLoginModal } from './components/AdminLoginModal';
+import { 
+  fetchDonationGoal, updateDonationGoal, 
+  fetchCats, saveCat, deleteCat,
+  fetchMenu, saveMenuItem, deleteMenuItem,
+  fetchTNRUpdates, saveTNRUpdate,
+  fetchWishlist, saveWishlistItem 
+} from './services/dataService';
 import {
   GoalModal,
   CatFormModal,
